@@ -2,6 +2,22 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware to enforce HTTPS
+app.use((req, res, next) => {
+  // Check if request is already HTTPS
+  const isSecure = req.secure ||
+                   req.headers['x-forwarded-proto'] === 'https' ||
+                   req.protocol === 'https';
+
+  // If not secure and not localhost, redirect to HTTPS
+  if (!isSecure && req.hostname !== 'localhost' && req.hostname !== '127.0.0.1') {
+    const httpsUrl = `https://${req.hostname}${req.url}`;
+    return res.redirect(301, httpsUrl);
+  }
+
+  next();
+});
+
 // Helper function to get client IP
 function getClientIP(req) {
   // Check various headers for the real IP (useful when behind proxies/load balancers)
